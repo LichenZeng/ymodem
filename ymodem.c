@@ -866,8 +866,8 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 		{
 			errors++;
 		}
-	}while (!ackReceived);//WEI && (errors < 0x0A));
-#if 0
+	}while (!ackReceived && (errors < 0x0A));
+#if 1
 	if (errors >=  0x0A)
 	{
 		printf("errors return\n");
@@ -956,9 +956,9 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 				errors++;
 				printf("Send Packet Error : %d\n", errors);
 			}
-		}while(!ackReceived);//WEI && (errors < 0x0A));
+		}while(!ackReceived && (errors < 0x0A));
 		/* Resend packet if NAK  for a count of 10 else end of commuincation */
-#if 0
+#if 1
 		if (errors >=  0x0A)
 		{
 			return errors;
@@ -984,7 +984,7 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 			errors++;
 		}
 	}while (!ackReceived);// && (errors < 0x0A));
-#if 0
+#if 1
 	if (errors >=  0x0A)
 	{
 		printf("Return errors 968\n");
@@ -1032,9 +1032,9 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 			errors++;
 		}
 
-	}while (!ackReceived);//WEI && (errors < 0x0A));
+	}while (!ackReceived && (errors < 0x0A));
 	/* Resend packet if NAK  for a count of 10  else end of commuincation */
-#if 0
+#if 1
 	if (errors >=  0x0A)
 	{
 		return errors;
@@ -1054,8 +1054,8 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 		{
 			errors++;
 		}
-	}while (!ackReceived);//WEI && (errors < 0x0A));
-#if 0
+	}while (!ackReceived && (errors < 0x0A));
+#if 1
 	if (errors >=  0x0A)
 	{
 		return errors;
