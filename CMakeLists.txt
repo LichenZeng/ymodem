@@ -35,7 +35,7 @@ set (recv_src_files
 	ymodem-rcv.c)
 
 set (send_src_files
-	ymodem.c)
+	ymodem.cpp)
 
 # 设置依赖库
 set (thread_lib -pthread)

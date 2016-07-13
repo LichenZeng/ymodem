@@ -103,7 +103,8 @@ ACK
 
 int uart_fd = -1;
 
-int setupPort(int fd, int baud, int data_bits, char event, int stop_bits, int parity, int hardware_control) {
+int setupPort(int fd, int baud, int data_bits, char event, int stop_bits, int parity, int hardware_control)
+{
 	struct termios newtio, oldtio;
 
 	if(tcgetattr(fd, &oldtio)  !=  0) {
@@ -186,7 +187,7 @@ int setupPort(int fd, int baud, int data_bits, char event, int stop_bits, int pa
 
 
 int openPort() {
-	uart_fd = open("/dev/pts/8", O_RDWR | O_NONBLOCK | O_NOCTTY | O_NDELAY);
+	uart_fd = open("/dev/ttys002", O_RDWR | O_NONBLOCK | O_NOCTTY | O_NDELAY);
 	//uart_fd = open("/dev/ttyUSB0", O_RDWR | O_NONBLOCK | O_NOCTTY | O_NDELAY);
 	if(uart_fd == -1) {
 		printf("failure, could not open port.\n");
@@ -238,7 +239,7 @@ int handle_after_recv_file_head() {
 int handle_after_recv_packet(uint8_t *packet, size_t size) {
 	int i;
 	//int32_t size = sizeof(packet);
-	printf("Received packet: %s length: %d bytes\n", file_name, size);
+	printf("Received packet: %s length: %lu bytes\n", file_name, size);
 	printf("Packet Content: \n");
 	for(i=0; i<size; i++) {
 		printf("0x%02x  ", packet[i]);
@@ -879,9 +880,9 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 		{
 			errors++;
 		}
-	}while (!ackReceived);//WEI && (errors < 0x0A));
+	}while (!ackReceived);//WEI && (errors < RETRY_TIMES));
 #if 0
-	if (errors >=  0x0A)
+	if (errors >=  RETRY_TIMES)
 	{
 		printf("errors return\n");
 		return errors;
@@ -956,10 +957,10 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 			{
 				errors++;
 			}
-		}while(!ackReceived);//WEI && (errors < 0x0A));
+		}while(!ackReceived);//WEI && (errors < RETRY_TIMES));
 		/* Resend packet if NAK  for a count of 10 else end of commuincation */
 #if 0
-		if (errors >=  0x0A)
+		if (errors >=  RETRY_TIMES)
 		{
 			return errors;
 		}
@@ -982,9 +983,9 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 		{
 			errors++;
 		}
-	}while (!ackReceived && (errors < 0x0A));
+	}while (!ackReceived && (errors < RETRY_TIMES));
 #if 0
-	if (errors >=  0x0A)
+	if (errors >=  RETRY_TIMES)
 	{
 		printf("Return errors 968\n");
 		return errors;
@@ -1028,10 +1029,10 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 			errors++;
 		}
 
-	}while (!ackReceived);//WEI && (errors < 0x0A));
+	}while (!ackReceived);//WEI && (errors < RETRY_TIMES));
 	/* Resend packet if NAK  for a count of 10  else end of commuincation */
 #if 0
-	if (errors >=  0x0A)
+	if (errors >=  RETRY_TIMES)
 	{
 		return errors;
 	}  
@@ -1050,9 +1051,9 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 		{
 			errors++;
 		}
-	}while (!ackReceived);//WEI && (errors < 0x0A));
+	}while (!ackReceived);//WEI && (errors < RETRY_TIMES));
 #if 0
-	if (errors >=  0x0A)
+	if (errors >=  RETRY_TIMES)
 	{
 		return errors;
 	}
@@ -1069,7 +1070,7 @@ int main() {
 		Send_Byte(CRC16);
 		uint32_t size = Ymodem_Receive(buf);
 		if(size) {
-#if 0
+#if 1
 			printf("---> Received file: %s --> File length: %d bytes\n", file_name, size);
 			printf("File Content: \n");
 			for(i=0; i<size; i++) {
