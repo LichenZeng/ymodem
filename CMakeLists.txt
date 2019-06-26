@@ -32,10 +32,10 @@ include_directories (
 
 # 设置源文件
 set (recv_src_files
-	ymodem-rcv.c)
+	ymodem-recv.c)
 
 set (send_src_files
-	ymodem.cpp)
+	ymodem-send.c)
 
 # 设置依赖库
 set (thread_lib -pthread)
