@@ -102,6 +102,7 @@ ACK
 #include <string.h>
 
 int uart_fd = -1;
+int uart_fd2 = -1;
 
 int setupPort(int fd, int baud, int data_bits, char event, int stop_bits, int parity, int hardware_control)
 {
@@ -187,22 +188,23 @@ int setupPort(int fd, int baud, int data_bits, char event, int stop_bits, int pa
 
 
 int openPort() {
-	uart_fd = open("/dev/ttys002", O_RDWR | O_NONBLOCK | O_NOCTTY | O_NDELAY);
+	uart_fd = open("/dev/myfifo", O_RDWR);
+	uart_fd2 = open("/dev/myfifo2", O_RDWR);
 	//uart_fd = open("/dev/ttyUSB0", O_RDWR | O_NONBLOCK | O_NOCTTY | O_NDELAY);
-	if(uart_fd == -1) {
+	if(uart_fd == -1 || uart_fd2 == -1) {
 		printf("failure, could not open port.\n");
 		return 0;
 	} else {
 		//fcntl(uart_fd, F_SETFL, 0);
 	}
 
-	int success = setupPort(uart_fd, 115200, 8, 'N', 1, 0, 0);
+	// int success = setupPort(uart_fd, 115200, 8, 'N', 1, 0, 0);
 
-	if(!success) {
-		printf("failure, could not configure port.\n");
-		return 0;
-	}
-	if(uart_fd <= 0) {
+	// if(!success) {
+		// printf("failure, could not configure port.\n");
+		// return 0;
+	// }
+	if(uart_fd <= 0 || uart_fd2 <= 0) {
 		printf("Connection attempt to port %s with %d baud, 8N1 failed, exiting.\n", "/dev/ttyUSB0", 115200);
 		return 0;
 	}
@@ -229,15 +231,16 @@ int receive_byte(char *chr) {
 }
 
 int send_byte(char chr) {
-	return writeBuf(uart_fd, &chr, 1);
+	return writeBuf(uart_fd2, &chr, 1);
 }
 
 int handle_after_recv_file_head() {
 	return 0;
 };
 
-int handle_after_recv_packet(uint8_t *packet, size_t size) {
+int handle_after_recv_packet(uint8_t *packet, size_t size, int32_t cnt, size_t allsize) {
 	int i;
+	int fd_dest;
 	//int32_t size = sizeof(packet);
 	printf("Received packet: %s length: %lu bytes\n", file_name, size);
 	printf("Packet Content: \n");
@@ -245,6 +248,16 @@ int handle_after_recv_packet(uint8_t *packet, size_t size) {
 		printf("0x%02x  ", packet[i]);
 	}
 	printf("\n");
+
+	fd_dest = open("recv.txt",O_WRONLY|O_CREAT|O_APPEND,0666);        //创建与传输文件同文件名的文件，并打开
+	if(fd_dest < 0)
+	{
+		perror("fail to oepn");
+		return -1;
+	}
+	write(fd_dest,packet,(size * cnt < allsize)? PACKET_1K_SIZE:allsize-size*(cnt-1));                 //向新创建的文件写入buf实际读取到的字符
+	close(fd_dest);
+
 	return 0;
 }
 
@@ -259,7 +272,7 @@ int handle_after_recv_packet(uint8_t *packet, size_t size) {
 //定义自己接受到文件头后的操作
 #define HANDLE_AFTER_RECV_FILE_HEAD() handle_after_recv_file_head()
 //定义自己接受到一个数据包后的操作
-#define HANDLE_AFTER_RECV_PACKET(pPacketData, size) handle_after_recv_packet(pPacketData, size)
+#define HANDLE_AFTER_RECV_PACKET(pPacketData, size, cnt, allsize) handle_after_recv_packet(pPacketData, size, cnt, allsize)
 
 #define IS_AF(c)  ((c >= 'A') && (c <= 'F'))
 #define IS_af(c)  ((c >= 'a') && (c <= 'f'))
@@ -557,8 +570,8 @@ int32_t Ymodem_Receive(uint8_t *buf)
 										file_size[i++] = '\0';
 
 										Str2Int(file_size, &size);
-										printf("size: %d\n", size);
-										printf("File size: %s\n", file_size);
+										printf("File name: %s\n", file_name);
+										printf("File size: %s %d\n", file_size, size);
 
 										/*如果文件大小超过最大允许接收大小，要求发送端终止传输*/
 										if (size > (MAX_RECV_SIZE - 1))
@@ -584,7 +597,7 @@ int32_t Ymodem_Receive(uint8_t *buf)
 									else
 									{
 										Send_Byte(ACK);
-										file_done = 1;
+										//file_done = 1;
 										session_done = 1;
 										break;
 									}
@@ -597,7 +610,7 @@ int32_t Ymodem_Receive(uint8_t *buf)
 									printf("Receive packet length: %d\n", packet_length);
 											
 									//接收到一个数据包后的处理函数
-									HANDLE_AFTER_RECV_PACKET(buf_ptr, packet_length+PACKET_HEADER);
+									HANDLE_AFTER_RECV_PACKET(buf_ptr, packet_length, packets_received, size);
 									/*
 									//根据处理函数的返回结果确定是要终止传输还是继续
 									if()

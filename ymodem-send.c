@@ -10,6 +10,7 @@
 #include "ymodem.h"
 
 int uart_fd = -1;
+int uart_fd2 = -1;
 
 int setupPort(int fd, int baud, int data_bits, char event, int stop_bits, int parity, int hardware_control) {
 	struct termios newtio, oldtio;
@@ -92,22 +93,24 @@ int setupPort(int fd, int baud, int data_bits, char event, int stop_bits, int pa
 
 int openPort()
 {
-	uart_fd = open("/dev/ttys001", O_RDWR | O_NONBLOCK | O_NOCTTY | O_NDELAY);
+	uart_fd = open("/dev/myfifo", O_RDWR);
+	uart_fd2 = open("/dev/myfifo2", O_RDWR);
 	//uart_fd = open("/dev/ttyUSB0", O_RDWR | O_NONBLOCK | O_NOCTTY | O_NDELAY);
-	if(uart_fd == -1) {
+	if(uart_fd == -1 || uart_fd2 == -1) {
 		printf("failure, could not open port.\n");
 		return 0;
 	} else {
 		fcntl(uart_fd, F_SETFL, 0);
+		fcntl(uart_fd2, F_SETFL, 0);
 	}
 
-	int success = setupPort(uart_fd, 115200, 8, 'N', 1, 0, 0);
+	// int success = setupPort(uart_fd, 115200, 8, 'N', 1, 0, 0);
 
-	if(!success) {
-		printf("failure, could not configure port.\n");
-		return 0;
-	}
-	if(uart_fd <= 0) {
+	// if(!success) {
+		// printf("failure, could not configure port.\n");
+		// return 0;
+	// }
+	if(uart_fd <= 0 || uart_fd2 <= 0) {
 		printf("Connection attempt to port %s with %d baud, 8N1 failed, exiting.\n", "/dev/ttyUSB0", 115200);
 		return 0;
 	}
@@ -122,7 +125,7 @@ int writeBuf(int fd, char *buf, int len)
 
 int readChar(uint8_t *chr)
 {
-	int result = read(uart_fd, chr, 1);
+	int result = read(uart_fd2, chr, 1);
 	return result;
 }
 
@@ -595,7 +598,9 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 	memset(packet_data, 0x0, PACKET_1K_SIZE + PACKET_OVERHEAD);
 	Ymodem_PrepareIntialPacket(&packet_data[0], FileName, &sizeFile);
 
-	int count = 1;
+
+	/* Wait for 'C' */
+	while (!((Receive_Byte(&receivedC[0], ACK_TIMEOUT_LONG) == 0) && (receivedC[0] == CRC16)));
 	do
 	{
 		/* Send Packet */
@@ -632,6 +637,10 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 	{
 		return errors;
 	}
+
+
+	/* Wait for 'C' */
+	while (!((Receive_Byte(&receivedC[0], ACK_TIMEOUT_LONG) == 0) && (receivedC[0] == CRC16)));
 
 	buf_ptr = buf;
 	size = sizeFile;
@@ -709,6 +718,7 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 		}
 	}
 
+
 	ackReceived = 0;
 	receivedC[0] = 0x00;
 	errors = 0;
@@ -731,6 +741,7 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 	{
 		return errors;
 	}
+
 
 	/* Last packet preparation */
 	ackReceived = 0;
@@ -778,6 +789,7 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 		return errors;
 	}
 
+
 	do
 	{
 		Send_Byte(EOT);
@@ -800,8 +812,8 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 	return 0; /* file trasmitted successfully */
 }
 
-int main() {
-	FILE *stream = fopen("./MyVim.png", "r");
+int main(int argc, const char * argv[]) {
+	FILE *stream = fopen(argv[1], "r");
 	//FILE *stream = fopen("../test.txt", "r");
 	if(!stream) {
 		return -1;
@@ -823,7 +835,7 @@ int main() {
 	int ret = openPort();
 	if(ret) {
 #if 1
-		Ymodem_Transmit(buf, (const uint8_t *)"MyVim.png", size);
+		Ymodem_Transmit(buf, (const uint8_t *)argv[1], size);
 		//Ymodem_Transmit(buf, "test.txt", size);
 #else
 		uint8_t buf2[] = { 0x1, 0x2, 0x3, 0x4, 0x5 };
