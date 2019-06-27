@@ -10,7 +10,7 @@
 #include "ymodem.h"
 
 int uart_fd = -1;
-int uart_fd2 = -1;
+//int uart_fd2 = -1;
 
 int setupPort(int fd, int baud, int data_bits, char event, int stop_bits, int parity, int hardware_control) {
 	struct termios newtio, oldtio;
@@ -93,24 +93,22 @@ int setupPort(int fd, int baud, int data_bits, char event, int stop_bits, int pa
 
 int openPort()
 {
-	uart_fd = open("/dev/myfifo", O_RDWR);
-	uart_fd2 = open("/dev/myfifo2", O_RDWR);
+	uart_fd = open("/dev/ttyS12", O_RDWR);
 	//uart_fd = open("/dev/ttyUSB0", O_RDWR | O_NONBLOCK | O_NOCTTY | O_NDELAY);
-	if(uart_fd == -1 || uart_fd2 == -1) {
+	if(uart_fd == -1) {
 		printf("failure, could not open port.\n");
 		return 0;
 	} else {
 		fcntl(uart_fd, F_SETFL, 0);
-		fcntl(uart_fd2, F_SETFL, 0);
 	}
 
-	// int success = setupPort(uart_fd, 115200, 8, 'N', 1, 0, 0);
+	int success = setupPort(uart_fd, 115200, 8, 'N', 1, 0, 0);
 
-	// if(!success) {
-		// printf("failure, could not configure port.\n");
-		// return 0;
-	// }
-	if(uart_fd <= 0 || uart_fd2 <= 0) {
+	if(!success) {
+		printf("failure, could not configure port.\n");
+		return 0;
+	}
+	if(uart_fd <= 0) {
 		printf("Connection attempt to port %s with %d baud, 8N1 failed, exiting.\n", "/dev/ttyUSB0", 115200);
 		return 0;
 	}
@@ -125,7 +123,7 @@ int writeBuf(int fd, char *buf, int len)
 
 int readChar(uint8_t *chr)
 {
-	int result = read(uart_fd2, chr, 1);
+	int result = read(uart_fd, chr, 1);
 	return result;
 }
 
