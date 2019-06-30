@@ -810,6 +810,45 @@ uint8_t Ymodem_Transmit(uint8_t *buf, const uint8_t* sendFileName, uint32_t size
 	return 0; /* file trasmitted successfully */
 }
 
+
+#define SYSFS_GPIO_EXPORT       "/sys/class/gpio/export"
+#define SYSFS_GPIO_PIN          "33"
+#define SYSFS_GPIO_DIR          "/sys/class/gpio/gpio33/direction"
+#define SYSFS_GPIO_VAL          "/sys/class/gpio/gpio33/value"
+
+void upgrade_gpio_init(void) {
+	int fd = 0;
+	fd = open(SYSFS_GPIO_EXPORT, O_WRONLY);
+	if(fd == -1)
+	{
+		printf("ERR: Upgrade gpio open error.\n");
+	}
+	write(fd, SYSFS_GPIO_PIN,sizeof(SYSFS_GPIO_PIN));
+	close(fd);
+
+	fd = open(SYSFS_GPIO_DIR, O_WRONLY);
+	if(fd == -1)
+	{
+		printf("ERR: Upgrade gpio direction open error.\n");
+	}
+	write(fd, "out", sizeof("out"));
+	close(fd);
+}
+
+void upgrade_gpio_set(int val) {
+	int IOfd = 0;
+	IOfd = open(SYSFS_GPIO_VAL, O_WRONLY);
+	if(IOfd == -1)
+	{
+		printf("ERR: Upgrade gpio value open error.\n");
+	}
+	if(!!val) {
+		write(IOfd, "1", sizeof("1"));
+	}else {
+		write(IOfd, "0", sizeof("0"));
+	}
+}
+
 int main(int argc, const char * argv[]) {
 	FILE *stream = fopen(argv[1], "r");
 	//FILE *stream = fopen("../test.txt", "r");
@@ -830,11 +869,14 @@ int main(int argc, const char * argv[]) {
 	}
 
 	fclose(stream);
+	upgrade_gpio_init();
 	int ret = openPort();
 	if(ret) {
 #if 1
+		upgrade_gpio_set(1);
 		Ymodem_Transmit(buf, (const uint8_t *)argv[1], size);
 		//Ymodem_Transmit(buf, "test.txt", size);
+		upgrade_gpio_set(0);
 #else
 		uint8_t buf2[] = { 0x1, 0x2, 0x3, 0x4, 0x5 };
 		Ymodem_Transmit(buf2, "teswt.txt", 5);
