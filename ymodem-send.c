@@ -93,7 +93,7 @@ int setupPort(int fd, int baud, int data_bits, char event, int stop_bits, int pa
 }
 
 int openPort() {
-    uart_fd = open("/dev/ttyS12", O_RDWR);
+    uart_fd = open("/dev/ttyHSL1", O_RDWR);
     //uart_fd = open("/dev/ttyUSB0", O_RDWR | O_NONBLOCK | O_NOCTTY | O_NDELAY);
     if (uart_fd == -1) {
         printf("failure, could not open port.\n");
