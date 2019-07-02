@@ -184,9 +184,6 @@ int setupPort(int fd, int baud, int data_bits, char event, int stop_bits, int pa
 	return 1;
 }
 
-
-
-
 int openPort() {
 	uart_fd = open("/dev/myfifo", O_RDWR);
 	uart_fd2 = open("/dev/myfifo2", O_RDWR);
@@ -221,10 +218,7 @@ int readChar(uint8_t *chr) {
 	return result;
 }
 
-
 uint8_t file_name[FILE_NAME_LENGTH];
-
-
 
 int receive_byte(char *chr) {
 	return readChar(chr);
@@ -727,7 +721,6 @@ void Ymodem_PrepareIntialPacket(uint8_t *data, const uint8_t* fileName, uint32_t
 	}
 }
 
-
 /******************************************************************************
  * FUNCTION: Ymodem_PreparePacket ( )
  * DESCRIPTION: 
@@ -798,7 +791,6 @@ uint16_t UpdateCRC16(uint16_t crcIn, uint8_t byte)
 	while(!(in&0x10000));
 	return crc&0xffffu;
 }
-
 
 /**
  * @brief  Cal CRC16 for YModem Packet
