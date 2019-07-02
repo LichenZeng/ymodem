@@ -1,9 +1,20 @@
 Author: Lycan
-Date: 20190627
+Date: 20190702
 Subject: Ymodel Demo使用说明
 
 
-我的环境：
+# 参考源码：
+
+https://github.com/xiaowei942/ymodem.git
+https://github.com/havenxie/stm32-iap-uart-boot.git
+https://github.com/havenxie/stm32-iap-uart-app_lite.git
+https://github.com/havenxie/stm32-iap-uart-app.git
+https://github.com/havenxie/winapp-iap-uart.git
+https://github.com/h4de5ing/MCUUpdate.git  # MCU固件升级的APK
+
+
+# 我的Linux环境（WSL子系统）：
+
 ymodem_st# lsb_release -a
 No LSB modules are available.
 Distributor ID: Ubuntu
@@ -15,6 +26,15 @@ cmake version 3.5.1
 gcc/g++ (Ubuntu 4.8.5-4ubuntu2) 4.8.5
 
 
+# 我的Windows环境：
+
+Windows 10 企业版 64位
+安装了Android Studio，同时配置了cmake，ndk等；
+NDK version: GNU Make 3.81
+
+
+# 使用CMAKE编译X86 Linux版本运用
+
 编译命令：
 mkdir build
 cd build
@@ -22,51 +42,34 @@ cmake ..
 make
 
 
-使用方法：
-1、创建两个fifo文件，命令如下：
-mkfifo /dev/myfifo
-mkfifo /dev/myfifo2
+# 使用 ndk-build 编译Android版本的运用
 
-2、打开两个命令终端，分别执行ymodem-send <file name> 和 ymodem-recv
-终端一: ./ymodem-send Makefile
-终端二: ./ymodem-recv
+1, 添加Windows ndk环境变量到path中，如下：
+比如，C:\Users\zengbin\AppData\Local\Android\Sdk\ndk-bundle
 
-3、对比接收到的文件是否和源文件相同（ymodem-recv会自动创建recv.txt）
-md5sum Makefile recv.txt
+2，使用如下命令编译
+ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk
 
-build# md5sum Makefile recv.txt
-bcd1dba6123c153f7cd06630bb69a1ad  Makefile
-bcd1dba6123c153f7cd06630bb69a1ad  recv.txt
+备注：
+使用 "ndk-build" 即可直接编译，前提是需要将相关文件放入"jni"命名的文件下。
 
 
-编译日志:
-root@G104E1900291:/mnt/d/Workspace/Code/MCU/ymodem_st/build# cmake ..
--- The C compiler identification is GNU 4.8.5
--- The CXX compiler identification is GNU 4.8.5
--- Check for working C compiler: /usr/bin/cc
--- Check for working C compiler: /usr/bin/cc -- works
--- Detecting C compiler ABI info
--- Detecting C compiler ABI info - done
--- Detecting C compile features
--- Detecting C compile features - done
--- Check for working CXX compiler: /usr/bin/g++
--- Check for working CXX compiler: /usr/bin/g++ -- works
--- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
--- Detecting CXX compile features
--- Detecting CXX compile features - done
-** You Select To Compile A Debug Edition ~! **
--- Configuring done
--- Generating done
--- Build files have been written to: /mnt/d/Workspace/Code/MCU/ymodem_st/build
+
+# 粗略使用方法：
+
+1，STM32 MCU侧资源准备与验证
+
+STM32 MCU Bootloader使用如下链接编译的固件；
+https://github.com/havenxie/stm32-iap-uart-boot.git
+
+STM32 MCU APP使用如下链接编译的固件；
+https://github.com/havenxie/stm32-iap-uart-app.git
+
+可以通过如下工具验证MCU固件升级通路是否正常；
+https://github.com/havenxie/winapp-iap-uart.git
+
+2，将ymodem-send 拷贝到Android文件系统中，并设置可执行权限，确保MCU和Android主控串口通路OK后执行如下命令即可；
+ ./ymodem-send <MCU固件>
+如: ./ymodem-send mcufw.bin
 
 
-root@G104E1900291:/mnt/d/Workspace/Code/MCU/ymodem_st/build# make
-Scanning dependencies of target ymodem-send
-[ 25%] Building C object CMakeFiles/ymodem-send.dir/ymodem-send.c.o
-[ 50%] Linking C executable ymodem-send
-[ 50%] Built target ymodem-send
-Scanning dependencies of target ymodem-recv
-[ 75%] Building C object CMakeFiles/ymodem-recv.dir/ymodem-recv.c.o
-[100%] Linking C executable ymodem-recv
-[100%] Built target ymodem-recv
